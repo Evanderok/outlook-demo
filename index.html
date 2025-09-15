@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Outlook Demo Mailbox</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --primary: #0078D4;
@@ -19,6 +20,7 @@
       --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       --shadow-hover: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
       --unread-dot: #0078D4;
+      --drag-handle-width: 5px;
     }
     
     * {
@@ -33,6 +35,8 @@
       color: var(--text-primary);
       font-size: 14px;
       line-height: 1.4;
+      overflow: hidden;
+      height: 100vh;
     }
     
     .container {
@@ -162,6 +166,7 @@
       overflow-y: auto;
       padding-top: 8px;
       transition: width 0.3s ease;
+      z-index: 5;
     }
     
     .sidebar.collapsed {
@@ -183,6 +188,11 @@
       cursor: pointer;
       z-index: 5;
       font-size: 10px;
+      transition: all 0.2s ease;
+    }
+    
+    .sidebar-toggle:hover {
+      background: var(--hover);
     }
     
     .sidebar-item {
@@ -235,14 +245,19 @@
       letter-spacing: 0.5px;
     }
     
-    .mail-list {
+    .mail-list-container {
+      display: flex;
+      flex-direction: column;
       width: 320px;
       border-right: 1px solid var(--border);
       background: var(--bg-panel);
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
+      overflow: hidden;
       transition: width 0.3s ease;
+    }
+    
+    .mail-list {
+      flex: 1;
+      overflow-y: auto;
     }
     
     .mail-list-header {
@@ -259,6 +274,10 @@
       gap: 8px;
       margin-top: 8px;
       padding: 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: thin;
     }
     
     .mail-filter {
@@ -269,6 +288,7 @@
       color: var(--text-secondary);
       cursor: pointer;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
     
     .mail-filter:hover {
@@ -404,6 +424,23 @@
       padding: 16px 24px;
       border-bottom: 1px solid var(--border);
       background: var(--bg-panel);
+      transition: all 0.3s ease;
+    }
+    
+    .preview-header.collapsed {
+      padding: 8px 24px;
+    }
+    
+    .preview-header-toggle {
+      cursor: pointer;
+      display: inline-block;
+      margin-left: 8px;
+      color: var(--text-tertiary);
+      transition: transform 0.2s ease;
+    }
+    
+    .preview-header-toggle.rotated {
+      transform: rotate(180deg);
     }
     
     .preview-subject {
@@ -411,13 +448,18 @@
       font-weight: 600;
       margin-bottom: 12px;
       color: var(--text-primary);
+      display: inline-block;
     }
     
     .preview-meta {
       display: flex;
-      align-items: center;
       justify-content: space-between;
       margin-bottom: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .preview-header.collapsed .preview-meta {
+      display: none;
     }
     
     .preview-sender-info {
@@ -465,6 +507,7 @@
       padding: 12px 24px;
       border-bottom: 1px solid var(--border);
       background: var(--bg-panel);
+      flex-wrap: wrap;
     }
     
     .preview-actions button {
@@ -565,11 +608,8 @@
       transform: translateY(20px);
       opacity: 0;
       transition: all 0.3s ease;
-    }
-    
-    .modal.show .modal-content {
-      transform: translateY(0);
-      opacity: 1;
+      position: absolute;
+      cursor: default;
     }
     
     .modal-header {
@@ -578,6 +618,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      cursor: move;
+      user-select: none;
     }
     
     .modal-header h3 {
@@ -678,6 +720,20 @@
       background: var(--hover);
     }
     
+    .modal-status {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .modal-status.visible {
+      opacity: 1;
+    }
+    
     .loading {
       position: fixed;
       top: 0;
@@ -707,6 +763,19 @@
       height: 100%;
       color: var(--text-secondary);
       font-size: 16px;
+    }
+    
+    /* 分隔线样式 */
+    .resizer {
+      width: var(--drag-handle-width);
+      background: transparent;
+      cursor: col-resize;
+      transition: background 0.2s ease;
+      z-index: 4;
+    }
+    
+    .resizer:hover, .resizer.active {
+      background: var(--primary);
     }
     
     /* Scrollbar styling */
@@ -740,26 +809,87 @@
     
     /* Responsive adjustments */
     @media (max-width: 992px) {
-      .mail-list {
+      .mail-list-container {
         width: 280px;
       }
       
-      .sidebar {
+      .sidebar:not(.collapsed) {
         width: 60px;
       }
       
-      .sidebar .sidebar-item span,
-      .sidebar .folders-title {
+      .sidebar:not(.collapsed) .sidebar-item span,
+      .sidebar:not(.collapsed) .folders-title {
         display: none;
       }
       
-      .sidebar .sidebar-item {
+      .sidebar:not(.collapsed) .sidebar-item {
         justify-content: center;
         padding: 10px 0;
       }
       
+      .sidebar:not(.collapsed) .sidebar-item i {
+        margin-right: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .layout {
+        flex-direction: column;
+      }
+      
+      .sidebar, .sidebar.collapsed {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 8px;
+        overflow-y: visible;
+        display: flex;
+        justify-content: space-between;
+      }
+      
+      .sidebar .folders-section {
+        display: none;
+      }
+      
+      .sidebar .sidebar-item {
+        flex-direction: column;
+        padding: 8px;
+        margin: 0 4px;
+        text-align: center;
+      }
+      
       .sidebar .sidebar-item i {
         margin-right: 0;
+        margin-bottom: 4px;
+      }
+      
+      .sidebar .sidebar-item span {
+        font-size: 12px;
+      }
+      
+      .sidebar .sidebar-item .count {
+        margin-left: 0;
+        margin-top: 4px;
+      }
+      
+      .sidebar-toggle {
+        display: none;
+      }
+      
+      .mail-list-container {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: 50vh;
+      }
+      
+      .preview {
+        max-height: 50vh;
+      }
+      
+      .resizer {
+        display: none;
       }
     }
   </style>
@@ -771,16 +901,16 @@
 <div class="container">
   <header>
     <div class="logo">
-      <i>📧</i>
+      <i class="fas fa-envelope"></i>
       <span>Outlook</span>
     </div>
     <div class="search-container">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon"><i class="fas fa-search"></i></span>
       <input type="text" id="searchInput" placeholder="Search emails...">
     </div>
     <div class="top-buttons">
       <button id="newEmailBtn">
-        <i>✉️</i>
+        <i class="fas fa-plus"></i>
         <span>New Email</span>
       </button>
       <div class="user-avatar">B</div>
@@ -789,28 +919,31 @@
 
   <div class="layout">
     <div class="sidebar" id="sidebar">
+      <div class="sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-chevron-right"></i>
+      </div>
       <div class="sidebar-item active" data-folder="inbox">
-        <i>📥</i>
+        <i class="fas fa-inbox"></i>
         <span>Inbox</span>
         <span class="count">5</span>
       </div>
       <div class="sidebar-item" data-folder="sent">
-        <i>📤</i>
+        <i class="fas fa-paper-plane"></i>
         <span>Sent</span>
         <span class="count">2</span>
       </div>
       <div class="sidebar-item" data-folder="drafts">
-        <i>📝</i>
+        <i class="fas fa-file-alt"></i>
         <span>Drafts</span>
         <span class="count">1</span>
       </div>
       <div class="sidebar-item" data-folder="deleted">
-        <i>🗑️</i>
+        <i class="fas fa-trash-alt"></i>
         <span>Deleted</span>
         <span class="count">3</span>
       </div>
       <div class="sidebar-item" data-folder="spam">
-        <i>⚠️</i>
+        <i class="fas fa-exclamation-triangle"></i>
         <span>Junk Email</span>
         <span class="count">7</span>
       </div>
@@ -818,21 +951,23 @@
       <div class="folders-section">
         <div class="folders-title">Apps</div>
         <div class="sidebar-item" data-folder="calendar">
-          <i>📅</i>
+          <i class="fas fa-calendar"></i>
           <span>Calendar</span>
         </div>
         <div class="sidebar-item" data-folder="contacts">
-          <i>👥</i>
+          <i class="fas fa-address-book"></i>
           <span>Contacts</span>
         </div>
         <div class="sidebar-item" data-folder="tasks">
-          <i>✅</i>
+          <i class="fas fa-tasks"></i>
           <span>Tasks</span>
         </div>
       </div>
     </div>
-
-    <div class="mail-list">
+    
+    <div class="resizer" id="sidebarResizer"></div>
+    
+    <div class="mail-list-container" id="mailListContainer">
       <div class="mail-list-header">
         <div>Inbox</div>
         <div class="mail-count" id="mailCount">5 messages</div>
@@ -843,9 +978,11 @@
         <div class="mail-filter">Flagged</div>
         <div class="mail-filter">With Attachments</div>
       </div>
-      <div id="mailList"></div>
+      <div class="mail-list" id="mailList"></div>
     </div>
-
+    
+    <div class="resizer" id="mailListResizer"></div>
+    
     <div class="preview" id="preview">
       <div class="no-preview">Select a message to read</div>
     </div>
@@ -858,36 +995,37 @@
 
 <!-- New Email Modal -->
 <div class="modal" id="newEmailModal">
-  <div class="modal-content">
-    <div class="modal-header">
+  <div class="modal-content" id="modalContent">
+    <div class="modal-header" id="modalHeader">
       <h3>New Message</h3>
-      <button class="modal-close" onclick="document.getElementById('newEmailModal').style.display='none'">×</button>
+      <div class="modal-status" id="modalStatus">Saved to drafts</div>
+      <button class="modal-close" id="modalCloseBtn">×</button>
     </div>
     <div class="modal-body">
       <div class="modal-input-group">
         <label>To</label>
-        <input type="text" placeholder="Recipients">
+        <input type="text" id="emailTo" placeholder="Recipients">
       </div>
       <div class="modal-input-group">
         <label>Cc</label>
-        <input type="text" placeholder="Carbon copy">
+        <input type="text" id="emailCc" placeholder="Carbon copy">
       </div>
       <div class="modal-input-group">
         <label>Bcc</label>
-        <input type="text" placeholder="Blind carbon copy">
+        <input type="text" id="emailBcc" placeholder="Blind carbon copy">
       </div>
       <div class="modal-input-group">
         <label>Subject</label>
-        <input type="text" placeholder="Subject">
+        <input type="text" id="emailSubject" placeholder="Subject">
       </div>
       <div class="modal-input-group">
         <label>Message</label>
-        <textarea placeholder="Start typing your message..."></textarea>
+        <textarea id="emailBody" placeholder="Start typing your message..."></textarea>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="modal-cancel" onclick="document.getElementById('newEmailModal').style.display='none'">Cancel</button>
-      <button class="modal-send">Send</button>
+      <button class="modal-cancel" id="modalCancelBtn">Cancel</button>
+      <button class="modal-send" id="modalSendBtn">Send</button>
     </div>
   </div>
 </div>
@@ -904,7 +1042,7 @@
     unread: true,
     attachment: false,
     body: `
-      <p>Dear Bob,</p>
+      <p>Dear Bob,</p><br/>
       <p>Your order information has been updated. Details as below:</p>
       <table>
         <thead>
@@ -926,7 +1064,7 @@
           </tr>
         </tbody>
       </table>
-      <p>Please review at your earliest convenience.</p>
+      <p>Please review at your earliest convenience.</p><br/>
       <p>Best regards,<br>OMS System</p>
     `
   };
@@ -946,13 +1084,13 @@
     },
     { 
       id: 3,
-      sender: "Carrier <carrier@example.com>", // 已将Wang Qiang改为Carrier
+      sender: "Carrier <carrier@example.com>",
       receiver: "To: you",
       subject: "Team Building Time Confirmation",
       preview: "Please confirm the team building time...",
       time: "Yesterday",
       starred: true,
-      unread: false, // 已将unread状态改为false，移除未读标识
+      unread: false,
       attachment: false,
       body: "<p>Team building is scheduled for next Friday, please confirm attendance.</p>"
     },
@@ -986,6 +1124,8 @@
   let mails = [businessMail, ...fakeMails];
   let selectedMailId = 1; // 默认选中第一封邮件
   let currentFilter = 'all';
+  let isDragging = false;
+  let draftSaveTimeout = null;
 
   function renderMailList(filteredMails) {
     const list = document.getElementById("mailList");
@@ -1004,8 +1144,8 @@
         <div class="mail-header">
           <div class="mail-sender">${mail.sender.split(" <")[0]}</div>
           <div class="mail-meta">
-            ${mail.attachment ? '<span class="mail-attachment">📎</span>' : ''}
-            <span class="mail-star ${mail.starred ? 'active' : ''}">★</span>
+            ${mail.attachment ? '<span class="mail-attachment"><i class="fas fa-paperclip"></i></span>' : ''}
+            <span class="mail-star ${mail.starred ? 'active' : ''}"><i class="fas fa-star"></i></span>
             <span class="mail-time">${mail.time}</span>
           </div>
         </div>
@@ -1052,8 +1192,12 @@
     const senderInitial = senderName.charAt(0).toUpperCase();
     
     preview.innerHTML = `
-      <div class="preview-header">
-        <div class="preview-subject">${mail.subject}</div>
+      <div class="preview-header" id="previewHeader">
+        <div class="preview-subject">${mail.subject}
+          <span class="preview-header-toggle" id="previewHeaderToggle">
+            <i class="fas fa-chevron-down"></i>
+          </span>
+        </div>
         <div class="preview-meta">
           <div class="preview-sender-info">
             <div class="sender-avatar">${senderInitial}</div>
@@ -1066,11 +1210,11 @@
         </div>
       </div>
       <div class="preview-actions">
-        <button class="primary"><span>↩️</span> Reply</button>
-        <button><span>↩️</span> Reply All</button>
-        <button><span>➡️</span> Forward</button>
-        <button><span>⭐</span> ${mail.starred ? 'Unflag' : 'Flag'}</button>
-        <button><span>🗑️</span> Delete</button>
+        <button class="primary"><i class="fas fa-reply"></i> Reply</button>
+        <button><i class="fas fa-reply-all"></i> Reply All</button>
+        <button><i class="fas fa-forward"></i> Forward</button>
+        <button><i class="fas fa-star"></i> ${mail.starred ? 'Unflag' : 'Flag'}</button>
+        <button><i class="fas fa-trash-alt"></i> Delete</button>
       </div>
       <div class="preview-content">
         ${mail.body}
@@ -1078,7 +1222,7 @@
     `;
     
     // 为邮件操作按钮添加事件
-    const flagBtn = preview.querySelector('button:has(span:contains("⭐"))');
+    const flagBtn = preview.querySelector('button:has(i.fa-star)');
     if (flagBtn) {
       flagBtn.addEventListener('click', () => {
         const mailToUpdate = mails.find(m => m.id === selectedMailId);
@@ -1090,7 +1234,7 @@
       });
     }
     
-    const deleteBtn = preview.querySelector('button:has(span:contains("🗑️"))');
+    const deleteBtn = preview.querySelector('button:has(i.fa-trash-alt)');
     if (deleteBtn) {
       deleteBtn.addEventListener('click', () => {
         mails = mails.filter(m => m.id !== selectedMailId);
@@ -1103,6 +1247,15 @@
         filterAndRenderMails();
       });
     }
+    
+    // 预览标题折叠/展开功能
+    const headerToggle = document.getElementById('previewHeaderToggle');
+    const previewHeader = document.getElementById('previewHeader');
+    
+    headerToggle.addEventListener('click', () => {
+      previewHeader.classList.toggle('collapsed');
+      headerToggle.classList.toggle('rotated');
+    });
   }
 
   function filterAndRenderMails() {
@@ -1152,6 +1305,22 @@
 
   function initSidebar() {
     const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    
+    // 侧边栏折叠/展开功能
+    sidebarToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+      const icon = sidebarToggle.querySelector('i');
+      if (sidebar.classList.contains('collapsed')) {
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-left');
+      } else {
+        icon.classList.remove('fa-chevron-left');
+        icon.classList.add('fa-chevron-right');
+      }
+    });
+    
+    // 侧边栏文件夹点击事件
     sidebar.addEventListener("click", e => {
       const item = e.target.closest('.sidebar-item');
       if (item && item.dataset.folder) {
@@ -1218,6 +1387,82 @@
     return filteredMails;
   }
 
+  function initResizers() {
+    // 侧边栏调整大小
+    const sidebar = document.getElementById('sidebar');
+    const sidebarResizer = document.getElementById('sidebarResizer');
+    const mailListContainer = document.getElementById('mailListContainer');
+    const mailListResizer = document.getElementById('mailListResizer');
+    
+    let startX, startWidth;
+    
+    function initResize(resizer, element) {
+      resizer.addEventListener('mousedown', function(e) {
+        startX = e.pageX;
+        startWidth = element.getBoundingClientRect().width;
+        isDragging = true;
+        
+        // 添加active类以突出显示拖动状态
+        resizer.classList.add('active');
+        
+        // 防止拖动时选中文本
+        document.body.style.userSelect = 'none';
+        
+        // 鼠标移动事件
+        document.addEventListener('mousemove', resize);
+        
+        // 鼠标释放事件
+        document.addEventListener('mouseup', stopResize);
+      });
+      
+      function resize(e) {
+        if (!isDragging) return;
+        
+        // 计算新宽度
+        const width = startWidth + (e.pageX - startX);
+        
+        // 设置最小宽度
+        if (width > 60 && width < 400) {
+          element.style.width = `${width}px`;
+          
+          // 处理侧边栏文本显示/隐藏
+          if (element === sidebar) {
+            const items = element.querySelectorAll('.sidebar-item span, .folders-title');
+            if (width <= 80) {
+              items.forEach(item => item.style.display = 'none');
+              element.querySelectorAll('.sidebar-item').forEach(item => {
+                item.style.justifyContent = 'center';
+                item.style.padding = '10px 0';
+                item.querySelector('i').style.marginRight = '0';
+              });
+            } else {
+              items.forEach(item => item.style.display = '');
+              element.querySelectorAll('.sidebar-item').forEach(item => {
+                item.style.justifyContent = '';
+                item.style.padding = '8px 16px';
+                item.querySelector('i').style.marginRight = '12px';
+              });
+            }
+          }
+        }
+      }
+      
+      function stopResize() {
+        isDragging = false;
+        resizer.classList.remove('active');
+        document.body.style.userSelect = '';
+        
+        // 移除事件监听器
+        document.removeEventListener('mousemove', resize);
+        document.removeEventListener('mouseup', stopResize);
+      }
+    }
+    
+    // 初始化两个可调整大小的区域
+    initResize(sidebarResizer, sidebar);
+    initResize(mailListResizer, mailListContainer);
+  }
+
   function initSearch() {
     const input = document.getElementById("searchInput");
     input.addEventListener("input", filterAndRenderMails);
@@ -1242,81 +1487,173 @@
   function initNewEmail() {
     const btn = document.getElementById("newEmailBtn");
     const modal = document.getElementById("newEmailModal");
+    const modalContent = document.getElementById("modalContent");
+    const modalHeader = document.getElementById("modalHeader");
+    const modalCloseBtn = document.getElementById("modalCloseBtn");
+    const modalCancelBtn = document.getElementById("modalCancelBtn");
+    const modalSendBtn = document.getElementById("modalSendBtn");
+    const modalStatus = document.getElementById("modalStatus");
+    const emailBody = document.getElementById("emailBody");
+    const emailSubject = document.getElementById("emailSubject");
+    const emailTo = document.getElementById("emailTo");
     
+    // 打开模态窗口
     btn.addEventListener("click", () => {
       modal.style.display = "flex";
       // 添加动画类
       setTimeout(() => {
         modal.classList.add('show');
       }, 10);
+      
+      // 重置表单
+      resetEmailForm();
     });
+    
+    // 关闭模态窗口
+    function closeModal() {
+      modal.classList.remove('show');
+      setTimeout(() => {
+        modal.style.display = "none";
+      }, 300);
+    }
     
     modal.addEventListener("click", e => {
       if (e.target === modal) {
-        modal.classList.remove('show');
-        setTimeout(() => {
-          modal.style.display = "none";
-        }, 300);
+        closeModal();
       }
     });
     
     document.addEventListener("keydown", e => {
       if (e.key === "Escape" && modal.style.display === "flex") {
-        modal.classList.remove('show');
-        setTimeout(() => {
-          modal.style.display = "none";
-        }, 300);
+        closeModal();
       }
     });
     
-    const closeBtn = modal.querySelector(".modal-close");
-    closeBtn.addEventListener("click", () => {
-      modal.classList.remove('show');
-      setTimeout(() => {
-        modal.style.display = "none";
-      }, 300);
-    });
+    modalCloseBtn.addEventListener("click", closeModal);
+    modalCancelBtn.addEventListener("click", closeModal);
     
     // 发送按钮功能
-    const sendBtn = modal.querySelector('.modal-send');
-    sendBtn.addEventListener('click', () => {
-      const toInput = modal.querySelector('input[placeholder="Recipients"]');
-      const subjectInput = modal.querySelector('input[placeholder="Subject"]');
-      const bodyInput = modal.querySelector('textarea');
-      
-      if (toInput.value && subjectInput.value) {
+    modalSendBtn.addEventListener('click', () => {
+      if (emailTo.value && emailSubject.value) {
         // 创建新邮件
         const newMail = {
           id: Date.now(),
           sender: "Bob <bob@example.com>",
-          receiver: toInput.value,
-          subject: subjectInput.value,
+          receiver: emailTo.value,
+          subject: emailSubject.value,
           time: "Just now",
-          preview: bodyInput.value.substring(0, 50) + (bodyInput.value.length > 50 ? "..." : ""),
+          preview: emailBody.value.substring(0, 50) + (emailBody.value.length > 50 ? "..." : ""),
           starred: false,
           unread: false,
           attachment: false,
-          body: `<p>${bodyInput.value.replace(/\n/g, "</p><p>")}</p>`
+          body: `<p>${emailBody.value.replace(/\n/g, "</p><p>")}</p>`
         };
         
         // 添加到邮件列表
         mails.unshift(newMail);
         
-        // 重置表单
-        toInput.value = "";
-        subjectInput.value = "";
-        bodyInput.value = "";
-        
         // 关闭模态框
-        modal.classList.remove('show');
-        setTimeout(() => {
-          modal.style.display = "none";
-        }, 300);
+        closeModal();
         
         // 更新邮件列表
         filterAndRenderMails();
       }
     });
+    
+    // 模拟草稿保存功能
+    const emailInputs = [emailTo, document.getElementById('emailCc'), 
+                         document.getElementById('emailBcc'), emailSubject, emailBody];
+    
+    emailInputs.forEach(input => {
+      input.addEventListener('input', () => {
+        // 清除之前的超时
+        if (draftSaveTimeout) {
+          clearTimeout(draftSaveTimeout);
+        }
+        
+        // 设置新的超时
+        draftSaveTimeout = setTimeout(() => {
+          // 显示保存状态
+          modalStatus.classList.add('visible');
+          
+          // 3秒后隐藏状态
+          setTimeout(() => {
+            modalStatus.classList.remove('visible');
+          }, 3000);
+        }, 1000);
+      });
+    });
+    
+    // 重置表单
+    function resetEmailForm() {
+      emailTo.value = "";
+      document.getElementById('emailCc').value = "";
+      document.getElementById('emailBcc').value = "";
+      emailSubject.value = "";
+      emailBody.value = "";
+      modalStatus.classList.remove('visible');
+    }
+    
+    // 模态窗口拖动功能
+    let modalOffsetX, modalOffsetY;
+    let isModalDragging = false;
+    
+    modalHeader.addEventListener('mousedown', (e) => {
+      isModalDragging = true;
+      const rect = modalContent.getBoundingClientRect();
+      modalOffsetX = e.clientX - rect.left;
+      modalOffsetY = e.clientY - rect.top;
+      modalContent.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isModalDragging) return;
+      
+      const x = e.clientX - modalOffsetX;
+      const y = e.clientY - modalOffsetY;
+      
+      // 限制在视口内
+      const maxX = window.innerWidth - modalContent.offsetWidth;
+      const maxY = window.innerHeight - modalContent.offsetHeight;
+      
+      const constrainedX = Math.max(0, Math.min(x, maxX));
+      const constrainedY = Math.max(0, Math.min(y, maxY));
+      
+      modalContent.style.left = `${constrainedX}px`;
+      modalContent.style.top = `${constrainedY}px`;
+      modalContent.style.transform = 'none'; // 禁用动画变换
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isModalDragging) {
+        isModalDragging = false;
+        modalContent.style.cursor = 'default';
+      }
+    });
+  }
+
+  // 初始化响应式布局
+  function initResponsiveLayout() {
+    function checkScreenSize() {
+      const layout = document.querySelector('.layout');
+      const sidebar = document.getElementById('sidebar');
+      
+      if (window.innerWidth <= 768) {
+        // 移动视图
+        if (sidebar.classList.contains('collapsed')) {
+          sidebar.classList.remove('collapsed');
+          const icon = document.getElementById('sidebarToggle').querySelector('i');
+          icon.classList.remove('fa-chevron-left');
+          icon.classList.add('fa-chevron-right');
+        }
+      }
+    }
+    
+    // 初始检查
+    checkScreenSize();
+    
+    // 窗口大小变化时检查
+    window.addEventListener('resize', checkScreenSize);
   }
 
   window.onload = () => {
@@ -1327,9 +1664,11 @@
       // 初始化界面
       filterAndRenderMails();
       initSidebar();
+      initResizers();
       initSearch();
       initFilters();
       initNewEmail();
+      initResponsiveLayout();
       
       // 默认选中Inbox和第一封邮件
       document.querySelector('.sidebar-item[data-folder="inbox"]').classList.add('active');
