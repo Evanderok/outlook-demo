@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Outlook Demo Mailbox</title>
+  <style>
+    :root {
+      --primary: #0078D4;
+      --primary-hover: #106ebe;
+      --hover: #f3f2f1;
+      --selected: #edebe9;
+      --border: #edebe9;
+      --font: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+      --bg-light: #faf9f8;
+      --bg-panel: #ffffff;
+      --text-primary: #323130;
+      --text-secondary: #605e5c;
+      --text-tertiary: #a19f9d;
+      --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      --shadow-hover: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: var(--font);
+      background: var(--bg-light);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 1440px;
+      margin: 0 auto;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+    
+    .logo {
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--primary);
+      padding: 8px 0;
+    }
+    
+    .search-container {
+      flex: 1;
+      max-width: 400px;
+      position: relative;
+      margin: 0 16px;
+    }
+    
+    .search-container input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--bg-light);
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    
+    .search-container input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+    
+    .top-buttons {
+      display: flex;
+      align-items: center;
+    }
+    
+    .top-buttons button {
+      margin-left: 12px;
+      padding: 6px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+    
+    .top-buttons button:hover {
+      background: var(--primary-hover);
+      box-shadow: var(--shadow-hover);
+    }
+    
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+      margin-left: 12px;
+      cursor: pointer;
+    }
+    
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .sidebar {
+      width: 220px;
+      border-right: 1px solid var(--border);
+      background: var(--bg-panel);
+      overflow-y: auto;
+      padding-top: 8px;
+    }
+    
+    .sidebar-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      border-radius: 4px;
+      margin: 0 8px;
+      transition: all 0.1s ease;
+    }
+    
+    .sidebar-item:hover {
+      background: var(--hover);
+    }
+    
+    .sidebar-item.active {
+      background: var(--selected);
+      font-weight: 600;
+    }
+    
+    .sidebar-item i {
+      margin-right: 12px;
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .folders-section {
+      padding: 16px 8px 8px;
+    }
+    
+    .folders-title {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .mail-list {
+      width: 320px;
+      border-right: 1px solid var(--border);
+      background: var(--bg-panel);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .mail-list-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-panel);
+    }
+    
+    .mail-count {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .mail-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.1s ease;
+      position: relative;
+    }
+    
+    .mail-item:hover {
+      background: var(--hover);
+    }
+    
+    .mail-item.selected {
+      background: var(--selected);
+      border-left: 3px solid var(--primary);
+    }
+    
+    .mail-item.unread {
+      font-weight: 600;
+    }
+    
+    .mail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    
+    .mail-sender {
+      font-size: 13px;
+      color: var(--text-primary);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .mail-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .mail-time {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+    
+    .mail-star {
+      color: #ccc;
+      cursor: pointer;
+      font-size: 14px;
+      transition: color 0.1s ease;
+    }
+    
+    .mail-star:hover {
+      color: #ffb900;
+    }
+    
+    .mail-star.active {
+      color: #ffb900;
+    }
+    
+    .mail-attachment {
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+    
+    .mail-subject {
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .mail-preview {
+      font-size: 13px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .preview {
+      flex: 1;
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .preview-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+    
+    .preview-subject {
+      font-size: 21px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+    
+    .preview-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .preview-sender-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .sender-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .sender-details {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .sender-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .sender-email {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .preview-time {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .preview-actions {
+      display: flex;
+      gap: 8px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-panel);
+    }
+    
+    .preview-actions button {
+      padding: 6px 12px;
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.1s ease;
+    }
+    
+    .preview-actions button:hover {
+      background: var(--hover);
+      border-color: #c8c6c4;
+    }
+    
+    .preview-content {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      background: var(--bg-panel);
+    }
+    
+    .preview-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+    }
+    
+    .preview-content th,
+    .preview-content td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    
+    .preview-content th {
+      background-color: #f3f2f1;
+      font-weight: 600;
+    }
+    
+    .preview-content a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    
+    .preview-content a:hover {
+      text-decoration: underline;
+    }
+    
+    .status-bar {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      border-top: 1px solid var(--border);
+      background: var(--bg-panel);
+      text-align: right;
+    }
+    
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background: var(--bg-panel);
+      padding: 0;
+      width: 600px;
+      border-radius: 6px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 4px;
+      border-radius: 4px;
+    }
+    
+    .modal-close:hover {
+      background: var(--hover);
+    }
+    
+    .modal-body {
+      padding: 24px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .modal-input-group {
+      margin-bottom: 16px;
+    }
+    
+    .modal-input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+    
+    .modal-input-group input,
+    .modal-input-group textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: var(--font);
+      font-size: 14px;
+      transition: border-color 0.2s ease;
+    }
+    
+    .modal-input-group input:focus,
+    .modal-input-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+    }
+    
+    .modal-input-group textarea {
+      min-height: 200px;
+      resize: vertical;
+    }
+    
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    
+    .modal-footer button {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    
+    .modal-send {
+      background: var(--primary);
+      color: white;
+      border: none;
+    }
+    
+    .modal-send:hover {
+      background: var(--primary-hover);
+    }
+    
+    .modal-cancel {
+      background: transparent;
+      color: var(--text-primary);
+    }
+    
+    .modal-cancel:hover {
+      background: var(--hover);
+    }
+    
+    .loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-panel);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+      color: var(--text-primary);
+      z-index: 999;
+    }
+    
+    .no-preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-secondary);
+      font-size: 16px;
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c8c6c4;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a19f9d;
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading" id="loading">Syncing emails...</div>
+
+<div class="container">
+  <header>
+    <div class="logo">Outlook</div>
+    <div class="search-container">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search emails...">
+    </div>
+    <div class="top-buttons">
+      <button id="newEmailBtn">New Email</button>
+      <div class="user-avatar">B</div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-item active" data-folder="inbox">
+        <i>📥</i>
+        <span>Inbox</span>
+      </div>
+      <div class="sidebar-item" data-folder="sent">
+        <i>📤</i>
+        <span>Sent</span>
+      </div>
+      <div class="sidebar-item" data-folder="drafts">
+        <i>📝</i>
+        <span>Drafts</span>
+      </div>
+      <div class="sidebar-item" data-folder="deleted">
+        <i>🗑️</i>
+        <span>Deleted</span>
+      </div>
+      <div class="sidebar-item" data-folder="spam">
+        <i>⚠️</i>
+        <span>Junk Email</span>
+      </div>
+      
+      <div class="folders-section">
+        <div class="folders-title">Apps</div>
+        <div class="sidebar-item" data-folder="calendar">
+          <i>📅</i>
+          <span>Calendar</span>
+        </div>
+        <div class="sidebar-item" data-folder="contacts">
+          <i>👥</i>
+          <span>Contacts</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mail-list">
+      <div class="mail-list-header">
+        <div>Inbox</div>
+        <div class="mail-count" id="mailCount">15 messages</div>
+      </div>
+      <div id="mailList"></div>
+    </div>
+
+    <div class="preview" id="preview">
+      <div class="no-preview">Select a message to read</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    Total 15 emails, 15 loaded · Demo Mode v1.0
+  </div>
+</div>
+
+<!-- New Email Modal -->
+<div class="modal" id="newEmailModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>New Message</h3>
+      <button class="modal-close" onclick="document.getElementById('newEmailModal').style.display='none'">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-input-group">
+        <label>To</label>
+        <input type="text" placeholder="Recipients">
+      </div>
+      <div class="modal-input-group">
+        <label>Subject</label>
+        <input type="text" placeholder="Subject">
+      </div>
+      <div class="modal-input-group">
+        <label>Message</label>
+        <textarea placeholder="Start typing your message..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="document.getElementById('newEmailModal').style.display='none'">Cancel</button>
+      <button class="modal-send" disabled>Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const businessMail = {
+    id: 1,
+    sender: "OMS@if-groups.com",
+    receiver: "Bob",
+    subject: "Order information has Updated, PO Number:20250829-B130A2-06Y, Product Name:FB22A20V01 rPVC VISA",
+    time: "2025-09-15 11:23:47",
+    preview: "Your order information has been updated...",
+    starred: true,
+    unread: true,
+    attachment: false,
+    body: `
+      <p>Dear Bob,</p><br>
+      <p>Your order information has been updated. Details as below:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Information Type</th>
+            <th>Information Content</th>
+            <th>Publisher</th>
+            <th>Update Time</th>
+            <th>Project gallery</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Order Notification</td>
+            <td>PO Number:20250829-B130A2-06Y, <br>Product Name:FB22A20V01 rPVC VISA</td>
+            <td>Bruce</td>
+            <td>2025-09-15 11:23:47</td>
+            <td><a href="#" onclick="return false;">link</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Please review at your earliest convenience.</p><br>
+      <p>Best regards,<br>OMS System</p>
+    `
+  };
+
+  const fakeMails = [
+    { 
+      id: 2,
+      sender: "Li Na <lina@example.com>",
+      subject: "Q3 Budget Approval",
+      preview: "Please complete the approval process...",
+      time: "2 hours ago",
+      starred: false,
+      unread: false,
+      attachment: true,
+      body: "<p>Budget document has been uploaded, please check.</p>"
+    },
+    { 
+      id: 3,
+      sender: "Wang Qiang <wangqiang@example.com>",
+      subject: "Team Building Time Confirmation",
+      preview: "Please confirm the team building time...",
+      time: "Yesterday",
+      starred: true,
+      unread: true,
+      attachment: false,
+      body: "<p>Team building is scheduled for next Friday, please confirm attendance.</p>"
+    },
+    { 
+      id: 4,
+      sender: "HR <hr@example.com>",
+      subject: "Employee Handbook Update",
+      preview: "New employee handbook has been published...",
+      time: "3 days ago",
+      starred: false,
+      unread: false,
+      attachment: true,
+      body: "<p>Please check the latest employee handbook in the attachment.</p>"
+    },
+    { 
+      id: 5,
+      sender: "Client <client@example.com>",
+      subject: "Cooperation Plan Discussion",
+      preview: "We hope to further discuss...",
+      time: "1 week ago",
+      starred: false,
+      unread: false,
+      attachment: false,
+      body: "<p>Attachment is our latest cooperation plan, please check.</p>"
+    },
+    { 
+      id: 6,
+      sender: "Zhang Wei <zhangwei@example.com>",
+      subject: "Project Progress Report",
+      preview: "This week's progress is 80% complete...",
+      time: "2 weeks ago",
+      starred: false,
+      unread: false,
+      attachment: false,
+      body: "<p>Project is progressing smoothly, expected delivery early next month.</p>"
+    },
+    { 
+      id: 7,
+      sender: "Meeting Room <meeting@example.com>",
+      subject: "Conference Room Booking Confirmation",
+      preview: "Your booking for Conference Room A is confirmed...",
+      time: "3 hours ago",
+      starred: false,
+      unread: true,
+      attachment: false,
+      body: "<p>Your booking for Conference Room A on March 15th from 2:00 PM to 4:00 PM is confirmed.</p>"
+    },
+    { 
+      id: 8,
+      sender: "IT Support <itsupport@example.com>",
+      subject: "System Maintenance Notification",
+      preview: "Scheduled maintenance this weekend...",
+      time: "1 day ago",
+      starred: false,
+      unread: false,
+      attachment: false,
+      body: "<p>System maintenance is scheduled for this Saturday from 10:00 PM to 2:00 AM.</p>"
+    },
+    { 
+      id: 9,
+      sender: "Marketing Team <marketing@example.com>",
+      subject: "Q1 Marketing Campaign Results",
+      preview: "Great results from our latest campaign...",
+      time: "4 days ago",
+      starred: true,
+      unread: false,
+      attachment: true,
+      body: "<p>Please find attached the Q1 marketing campaign results report.</p>"
+    },
+  ];
+
+  let currentFolder = 'inbox';
+  let mails = [businessMail, ...fakeMails];
+  let selectedMailId = null;
+
+  function renderMailList(filteredMails) {
+    const list = document.getElementById("mailList");
+    list.innerHTML = "";
+    
+    filteredMails.forEach(mail => {
+      const item = document.createElement("div");
+      item.className = `mail-item ${mail.unread ? 'unread' : ''} ${mail.id === selectedMailId ? 'selected' : ''}`;
+      item.dataset.id = mail.id;
+      
+      item.innerHTML = `
+        <div class="mail-header">
+          <div class="mail-sender">${mail.sender.split(" <")[0]}</div>
+          <div class="mail-meta">
+            ${mail.attachment ? '<span class="mail-attachment">📎</span>' : ''}
+            <span class="mail-star ${mail.starred ? 'active' : ''}">★</span>
+            <span class="mail-time">${mail.time}</span>
+          </div>
+        </div>
+        <div class="mail-subject">${mail.subject}</div>
+        <div class="mail-preview">${mail.preview}</div>
+      `;
+      
+      item.querySelector(".mail-star").addEventListener("click", e => {
+        e.stopPropagation();
+        mail.starred = !mail.starred;
+        renderMailList(filteredMails);
+      });
+      
+      item.addEventListener("click", () => {
+        selectedMailId = mail.id;
+        renderPreview(mail);
+        mail.unread = false;
+        renderMailList(filteredMails);
+      });
+      
+      list.appendChild(item);
+    });
+    
+    document.getElementById("mailCount").textContent = `${filteredMails.length} messages`;
+  }
+
+  function renderPreview(mail) {
+    const preview = document.getElementById("preview");
+    const senderName = mail.sender.split(" <")[0];
+    const senderInitial = senderName.charAt(0).toUpperCase();
+    
+    preview.innerHTML = `
+      <div class="preview-header">
+        <div class="preview-subject">${mail.subject}</div>
+        <div class="preview-meta">
+          <div class="preview-sender-info">
+            <div class="sender-avatar">${senderInitial}</div>
+            <div class="sender-details">
+              <div class="sender-name">${senderName}</div>
+              <div class="sender-email">${mail.sender}</div>
+            </div>
+          </div>
+          <div class="preview-time">${mail.time}</div>
+        </div>
+      </div>
+      <div class="preview-actions">
+        <button><span>↩️</span> Reply</button>
+        <button><span>↩️</span> Reply All</button>
+        <button><span>➡️</span> Forward</button>
+        <button><span>🗑️</span> Delete</button>
+      </div>
+      <div class="preview-content">
+        ${mail.body}
+      </div>
+    `;
+  }
+
+  function initSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.addEventListener("click", e => {
+      const item = e.target.closest('.sidebar-item');
+      if (item && item.dataset.folder) {
+        sidebar.querySelectorAll(".sidebar-item").forEach(el => el.classList.remove("active"));
+        item.classList.add("active");
+        currentFolder = item.dataset.folder;
+        selectedMailId = null;
+        document.getElementById("preview").innerHTML = '<div class="no-preview">Select a message to read</div>';
+        renderMailList(mails);
+      }
+    });
+  }
+
+  function initSearch() {
+    const input = document.getElementById("searchInput");
+    input.addEventListener("input", () => {
+      const term = input.value.toLowerCase();
+      const filtered = mails.filter(mail => 
+        mail.subject.toLowerCase().includes(term) || 
+        mail.sender.toLowerCase().includes(term) ||
+        mail.preview.toLowerCase().includes(term)
+      );
+      renderMailList(filtered);
+    });
+  }
+
+  function initNewEmail() {
+    const btn = document.getElementById("newEmailBtn");
+    const modal = document.getElementById("newEmailModal");
+    
+    btn.addEventListener("click", () => {
+      modal.style.display = "flex";
+    });
+    
+    modal.addEventListener("click", e => {
+      if (e.target === modal) modal.style.display = "none";
+    });
+    
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") modal.style.display = "none";
+    });
+    
+    const closeBtn = modal.querySelector(".modal-close");
+    closeBtn.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+  }
+
+  window.onload = () => {
+    setTimeout(() => {
+      document.getElementById("loading").style.display = "none";
+      renderMailList(mails);
+      initSidebar();
+      initSearch();
+      initNewEmail();
+    }, 1000);
+  };
+</script>
+
+</body>
+</html>
