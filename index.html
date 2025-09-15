@@ -18,6 +18,7 @@
       --text-tertiary: #a19f9d;
       --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       --shadow-hover: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+      --unread-dot: #0078D4;
     }
     
     * {
@@ -52,6 +53,8 @@
       padding: 8px 16px;
       border-bottom: 1px solid var(--border);
       background: var(--bg-panel);
+      position: relative;
+      z-index: 10;
     }
     
     .logo {
@@ -59,6 +62,13 @@
       font-size: 18px;
       color: var(--primary);
       padding: 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logo i {
+      font-size: 20px;
     }
     
     .search-container {
@@ -108,7 +118,10 @@
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
-      transition: background 0.2s ease;
+      transition: background 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
     .top-buttons button:hover {
@@ -129,6 +142,11 @@
       font-size: 12px;
       margin-left: 12px;
       cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    
+    .user-avatar:hover {
+      transform: scale(1.05);
     }
     
     .layout {
@@ -143,6 +161,28 @@
       background: var(--bg-panel);
       overflow-y: auto;
       padding-top: 8px;
+      transition: width 0.3s ease;
+    }
+    
+    .sidebar.collapsed {
+      width: 60px;
+    }
+    
+    .sidebar-toggle {
+      position: absolute;
+      right: -10px;
+      top: 20px;
+      width: 20px;
+      height: 20px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+      font-size: 10px;
     }
     
     .sidebar-item {
@@ -153,6 +193,7 @@
       border-radius: 4px;
       margin: 0 8px;
       transition: all 0.1s ease;
+      position: relative;
     }
     
     .sidebar-item:hover {
@@ -169,6 +210,16 @@
       font-size: 16px;
       width: 20px;
       text-align: center;
+    }
+    
+    .sidebar-item .count {
+      margin-left: auto;
+      background: var(--primary);
+      color: white;
+      border-radius: 10px;
+      padding: 0 6px;
+      font-size: 12px;
+      font-weight: 600;
     }
     
     .folders-section {
@@ -191,6 +242,7 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
+      transition: width 0.3s ease;
     }
     
     .mail-list-header {
@@ -200,6 +252,33 @@
       align-items: center;
       justify-content: space-between;
       background: var(--bg-panel);
+    }
+    
+    .mail-filters {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 0 16px;
+    }
+    
+    .mail-filter {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 12px;
+      background: var(--bg-light);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .mail-filter:hover {
+      background: var(--hover);
+      color: var(--text-primary);
+    }
+    
+    .mail-filter.active {
+      background: var(--primary);
+      color: white;
     }
     
     .mail-count {
@@ -213,10 +292,12 @@
       cursor: pointer;
       transition: all 0.1s ease;
       position: relative;
+      transform: translateX(0);
     }
     
     .mail-item:hover {
       background: var(--hover);
+      transform: translateX(2px);
     }
     
     .mail-item.selected {
@@ -224,8 +305,20 @@
       border-left: 3px solid var(--primary);
     }
     
+    .mail-item.unread::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      top: 18px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--unread-dot);
+    }
+    
     .mail-item.unread {
       font-weight: 600;
+      padding-left: 28px;
     }
     
     .mail-header {
@@ -291,6 +384,12 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    
+    .mail-to {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
     }
     
     .preview {
@@ -387,6 +486,16 @@
       border-color: #c8c6c4;
     }
     
+    .preview-actions button.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .preview-actions button.primary:hover {
+      background: var(--primary-hover);
+    }
+    
     .preview-content {
       flex: 1;
       padding: 24px;
@@ -441,6 +550,7 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      backdrop-filter: blur(2px);
     }
     
     .modal-content {
@@ -452,6 +562,14 @@
       max-height: 90vh;
       display: flex;
       flex-direction: column;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .modal.show .modal-content {
+      transform: translateY(0);
+      opacity: 1;
     }
     
     .modal-header {
@@ -508,7 +626,7 @@
       border-radius: 4px;
       font-family: var(--font);
       font-size: 14px;
-      transition: border-color 0.2s ease;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     
     .modal-input-group input:focus,
@@ -573,6 +691,13 @@
       font-size: 18px;
       color: var(--text-primary);
       z-index: 999;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    
+    .loading.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
     
     .no-preview {
@@ -602,6 +727,41 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #a19f9d;
     }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .mail-list {
+        width: 280px;
+      }
+      
+      .sidebar {
+        width: 60px;
+      }
+      
+      .sidebar .sidebar-item span,
+      .sidebar .folders-title {
+        display: none;
+      }
+      
+      .sidebar .sidebar-item {
+        justify-content: center;
+        padding: 10px 0;
+      }
+      
+      .sidebar .sidebar-item i {
+        margin-right: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -610,13 +770,19 @@
 
 <div class="container">
   <header>
-    <div class="logo">Outlook</div>
+    <div class="logo">
+      <i>📧</i>
+      <span>Outlook</span>
+    </div>
     <div class="search-container">
       <span class="search-icon">🔍</span>
       <input type="text" id="searchInput" placeholder="Search emails...">
     </div>
     <div class="top-buttons">
-      <button id="newEmailBtn">New Email</button>
+      <button id="newEmailBtn">
+        <i>✉️</i>
+        <span>New Email</span>
+      </button>
       <div class="user-avatar">B</div>
     </div>
   </header>
@@ -626,22 +792,27 @@
       <div class="sidebar-item active" data-folder="inbox">
         <i>📥</i>
         <span>Inbox</span>
+        <span class="count">5</span>
       </div>
       <div class="sidebar-item" data-folder="sent">
         <i>📤</i>
         <span>Sent</span>
+        <span class="count">2</span>
       </div>
       <div class="sidebar-item" data-folder="drafts">
         <i>📝</i>
         <span>Drafts</span>
+        <span class="count">1</span>
       </div>
       <div class="sidebar-item" data-folder="deleted">
         <i>🗑️</i>
         <span>Deleted</span>
+        <span class="count">3</span>
       </div>
       <div class="sidebar-item" data-folder="spam">
         <i>⚠️</i>
         <span>Junk Email</span>
+        <span class="count">7</span>
       </div>
       
       <div class="folders-section">
@@ -654,13 +825,23 @@
           <i>👥</i>
           <span>Contacts</span>
         </div>
+        <div class="sidebar-item" data-folder="tasks">
+          <i>✅</i>
+          <span>Tasks</span>
+        </div>
       </div>
     </div>
 
     <div class="mail-list">
       <div class="mail-list-header">
         <div>Inbox</div>
-        <div class="mail-count" id="mailCount">15 messages</div>
+        <div class="mail-count" id="mailCount">5 messages</div>
+      </div>
+      <div class="mail-filters">
+        <div class="mail-filter active">All</div>
+        <div class="mail-filter">Unread</div>
+        <div class="mail-filter">Flagged</div>
+        <div class="mail-filter">With Attachments</div>
       </div>
       <div id="mailList"></div>
     </div>
@@ -671,7 +852,7 @@
   </div>
 
   <div class="status-bar">
-    Total 15 emails, 15 loaded · Demo Mode v1.0
+    Total 5 emails, 5 loaded · Demo Mode v1.0
   </div>
 </div>
 
@@ -688,6 +869,14 @@
         <input type="text" placeholder="Recipients">
       </div>
       <div class="modal-input-group">
+        <label>Cc</label>
+        <input type="text" placeholder="Carbon copy">
+      </div>
+      <div class="modal-input-group">
+        <label>Bcc</label>
+        <input type="text" placeholder="Blind carbon copy">
+      </div>
+      <div class="modal-input-group">
         <label>Subject</label>
         <input type="text" placeholder="Subject">
       </div>
@@ -698,7 +887,7 @@
     </div>
     <div class="modal-footer">
       <button class="modal-cancel" onclick="document.getElementById('newEmailModal').style.display='none'">Cancel</button>
-      <button class="modal-send" disabled>Send</button>
+      <button class="modal-send">Send</button>
     </div>
   </div>
 </div>
@@ -707,15 +896,15 @@
   const businessMail = {
     id: 1,
     sender: "OMS@if-groups.com",
-    receiver: "Bob",
-    subject: "Order information has Updated, PO Number:20250829-B130A2-06Y, Product Name:FB22A20V01 rPVC VISA",
+    receiver: "To: you",
+    subject: "Updated Order Details for You (PO: 20250829-B130A2-06Y)",
     time: "2025-09-15 11:23:47",
     preview: "Your order information has been updated...",
     starred: true,
     unread: true,
     attachment: false,
     body: `
-      <p>Dear Bob,</p><br>
+      <p>Dear Bob,</p>
       <p>Your order information has been updated. Details as below:</p>
       <table>
         <thead>
@@ -730,14 +919,14 @@
         <tbody>
           <tr>
             <td>Order Notification</td>
-            <td>PO Number:20250829-B130A2-06Y, <br>Product Name:FB22A20V01 rPVC VISA</td>
+            <td>PO Number:20250829-B130A2-06Y, Product Name:FB22A20V01 rPVC VISA</td>
             <td>Bruce</td>
             <td>2025-09-15 11:23:47</td>
             <td><a href="#" onclick="return false;">link</a></td>
           </tr>
         </tbody>
       </table>
-      <p>Please review at your earliest convenience.</p><br>
+      <p>Please review at your earliest convenience.</p>
       <p>Best regards,<br>OMS System</p>
     `
   };
@@ -746,6 +935,7 @@
     { 
       id: 2,
       sender: "Li Na <lina@example.com>",
+      receiver: "To: you",
       subject: "Q3 Budget Approval",
       preview: "Please complete the approval process...",
       time: "2 hours ago",
@@ -756,18 +946,20 @@
     },
     { 
       id: 3,
-      sender: "Wang Qiang <wangqiang@example.com>",
+      sender: "Carrier <carrier@example.com>", // 已将Wang Qiang改为Carrier
+      receiver: "To: you",
       subject: "Team Building Time Confirmation",
       preview: "Please confirm the team building time...",
       time: "Yesterday",
       starred: true,
-      unread: true,
+      unread: false, // 已将unread状态改为false，移除未读标识
       attachment: false,
       body: "<p>Team building is scheduled for next Friday, please confirm attendance.</p>"
     },
     { 
       id: 4,
       sender: "HR <hr@example.com>",
+      receiver: "To: you",
       subject: "Employee Handbook Update",
       preview: "New employee handbook has been published...",
       time: "3 days ago",
@@ -779,6 +971,7 @@
     { 
       id: 5,
       sender: "Client <client@example.com>",
+      receiver: "To: you",
       subject: "Cooperation Plan Discussion",
       preview: "We hope to further discuss...",
       time: "1 week ago",
@@ -786,56 +979,13 @@
       unread: false,
       attachment: false,
       body: "<p>Attachment is our latest cooperation plan, please check.</p>"
-    },
-    { 
-      id: 6,
-      sender: "Zhang Wei <zhangwei@example.com>",
-      subject: "Project Progress Report",
-      preview: "This week's progress is 80% complete...",
-      time: "2 weeks ago",
-      starred: false,
-      unread: false,
-      attachment: false,
-      body: "<p>Project is progressing smoothly, expected delivery early next month.</p>"
-    },
-    { 
-      id: 7,
-      sender: "Meeting Room <meeting@example.com>",
-      subject: "Conference Room Booking Confirmation",
-      preview: "Your booking for Conference Room A is confirmed...",
-      time: "3 hours ago",
-      starred: false,
-      unread: true,
-      attachment: false,
-      body: "<p>Your booking for Conference Room A on March 15th from 2:00 PM to 4:00 PM is confirmed.</p>"
-    },
-    { 
-      id: 8,
-      sender: "IT Support <itsupport@example.com>",
-      subject: "System Maintenance Notification",
-      preview: "Scheduled maintenance this weekend...",
-      time: "1 day ago",
-      starred: false,
-      unread: false,
-      attachment: false,
-      body: "<p>System maintenance is scheduled for this Saturday from 10:00 PM to 2:00 AM.</p>"
-    },
-    { 
-      id: 9,
-      sender: "Marketing Team <marketing@example.com>",
-      subject: "Q1 Marketing Campaign Results",
-      preview: "Great results from our latest campaign...",
-      time: "4 days ago",
-      starred: true,
-      unread: false,
-      attachment: true,
-      body: "<p>Please find attached the Q1 marketing campaign results report.</p>"
-    },
+    }
   ];
 
   let currentFolder = 'inbox';
   let mails = [businessMail, ...fakeMails];
-  let selectedMailId = null;
+  let selectedMailId = 1; // 默认选中第一封邮件
+  let currentFilter = 'all';
 
   function renderMailList(filteredMails) {
     const list = document.getElementById("mailList");
@@ -843,8 +993,12 @@
     
     filteredMails.forEach(mail => {
       const item = document.createElement("div");
-      item.className = `mail-item ${mail.unread ? 'unread' : ''} ${mail.id === selectedMailId ? 'selected' : ''}`;
+      item.className = `mail-item ${mail.unread ? 'unread' : ''} ${mail.id === selectedMailId ? 'selected' : ''} fade-in`;
       item.dataset.id = mail.id;
+      
+      // 判断是否是发给当前用户的邮件
+      const isToUser = mail.receiver === "Bob" || !mail.receiver;
+      const toText = isToUser ? "To: you" : `${mail.receiver}`;
       
       item.innerHTML = `
         <div class="mail-header">
@@ -855,6 +1009,7 @@
             <span class="mail-time">${mail.time}</span>
           </div>
         </div>
+        <div class="mail-to">${toText}</div>
         <div class="mail-subject">${mail.subject}</div>
         <div class="mail-preview">${mail.preview}</div>
       `;
@@ -866,10 +1021,23 @@
       });
       
       item.addEventListener("click", () => {
+        // 移除之前选中的邮件高亮
+        const prevSelected = document.querySelector('.mail-item.selected');
+        if (prevSelected) {
+          prevSelected.classList.remove('selected');
+        }
+        
+        // 设置新选中的邮件
         selectedMailId = mail.id;
+        item.classList.add('selected');
+        
         renderPreview(mail);
-        mail.unread = false;
-        renderMailList(filteredMails);
+        
+        // 如果是未读邮件，标记为已读
+        if (mail.unread) {
+          mail.unread = false;
+          renderMailList(filteredMails);
+        }
       });
       
       list.appendChild(item);
@@ -891,22 +1059,95 @@
             <div class="sender-avatar">${senderInitial}</div>
             <div class="sender-details">
               <div class="sender-name">${senderName}</div>
-              <div class="sender-email">${mail.sender}</div>
+              <div class="sender-email">${mail.receiver}</div>
             </div>
           </div>
           <div class="preview-time">${mail.time}</div>
         </div>
       </div>
       <div class="preview-actions">
-        <button><span>↩️</span> Reply</button>
+        <button class="primary"><span>↩️</span> Reply</button>
         <button><span>↩️</span> Reply All</button>
         <button><span>➡️</span> Forward</button>
+        <button><span>⭐</span> ${mail.starred ? 'Unflag' : 'Flag'}</button>
         <button><span>🗑️</span> Delete</button>
       </div>
       <div class="preview-content">
         ${mail.body}
       </div>
     `;
+    
+    // 为邮件操作按钮添加事件
+    const flagBtn = preview.querySelector('button:has(span:contains("⭐"))');
+    if (flagBtn) {
+      flagBtn.addEventListener('click', () => {
+        const mailToUpdate = mails.find(m => m.id === selectedMailId);
+        if (mailToUpdate) {
+          mailToUpdate.starred = !mailToUpdate.starred;
+          renderPreview(mailToUpdate);
+          filterAndRenderMails();
+        }
+      });
+    }
+    
+    const deleteBtn = preview.querySelector('button:has(span:contains("🗑️"))');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        mails = mails.filter(m => m.id !== selectedMailId);
+        if (mails.length > 0) {
+          selectedMailId = mails[0].id;
+          renderPreview(mails[0]);
+        } else {
+          preview.innerHTML = '<div class="no-preview">No messages in this folder</div>';
+        }
+        filterAndRenderMails();
+      });
+    }
+  }
+
+  function filterAndRenderMails() {
+    let filteredMails = [...mails];
+    
+    // 根据当前文件夹过滤
+    if (currentFolder === 'sent') {
+      filteredMails = filteredMails.filter(mail => mail.sender.includes("Bob"));
+    } else if (currentFolder === 'drafts') {
+      // 这里只是示例，实际中草稿邮件应有特殊标记
+      filteredMails = filteredMails.filter(mail => mail.subject.includes("Draft"));
+    } else if (currentFolder === 'deleted') {
+      // 示例过滤条件
+      filteredMails = filteredMails.filter(mail => mail.id % 2 === 0);
+    } else if (currentFolder === 'spam') {
+      // 示例过滤条件
+      filteredMails = filteredMails.filter(mail => mail.sender.includes("promo"));
+    }
+    
+    // 根据当前筛选条件过滤
+    if (currentFilter === 'unread') {
+      filteredMails = filteredMails.filter(mail => mail.unread);
+    } else if (currentFilter === 'flagged') {
+      filteredMails = filteredMails.filter(mail => mail.starred);
+    } else if (currentFilter === 'with attachments') {
+      filteredMails = filteredMails.filter(mail => mail.attachment);
+    }
+    
+    // 搜索过滤
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    if (searchTerm) {
+      filteredMails = filteredMails.filter(mail => 
+        mail.subject.toLowerCase().includes(searchTerm) || 
+        mail.sender.toLowerCase().includes(searchTerm) ||
+        mail.preview.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    renderMailList(filteredMails);
+    
+    // 如果当前选中的邮件不在过滤结果中，选中第一个
+    if (!filteredMails.some(m => m.id === selectedMailId) && filteredMails.length > 0) {
+      selectedMailId = filteredMails[0].id;
+      renderPreview(filteredMails[0]);
+    }
   }
 
   function initSidebar() {
@@ -914,26 +1155,87 @@
     sidebar.addEventListener("click", e => {
       const item = e.target.closest('.sidebar-item');
       if (item && item.dataset.folder) {
+        // 移除所有文件夹的高亮
         sidebar.querySelectorAll(".sidebar-item").forEach(el => el.classList.remove("active"));
+        // 高亮当前选中的文件夹
         item.classList.add("active");
+        
         currentFolder = item.dataset.folder;
-        selectedMailId = null;
-        document.getElementById("preview").innerHTML = '<div class="no-preview">Select a message to read</div>';
-        renderMailList(mails);
+        // 更新邮件列表标题
+        document.querySelector('.mail-list-header div:first-child').textContent = 
+          item.querySelector('span').textContent;
+        
+        // 重置过滤器
+        document.querySelectorAll('.mail-filter').forEach(f => f.classList.remove('active'));
+        document.querySelector('.mail-filter:first-child').classList.add('active');
+        currentFilter = 'all';
+        
+        // 过滤并渲染邮件
+        filterAndRenderMails();
+        
+        // 如果有邮件，选中第一封
+        const filteredMails = getFilteredMails();
+        if (filteredMails.length > 0) {
+          selectedMailId = filteredMails[0].id;
+          renderPreview(filteredMails[0]);
+        } else {
+          document.getElementById('preview').innerHTML = '<div class="no-preview">No messages in this folder</div>';
+        }
       }
     });
   }
 
+  function getFilteredMails() {
+    let filteredMails = [...mails];
+    
+    if (currentFolder === 'sent') {
+      filteredMails = filteredMails.filter(mail => mail.sender.includes("Bob"));
+    } else if (currentFolder === 'drafts') {
+      filteredMails = filteredMails.filter(mail => mail.subject.includes("Draft"));
+    } else if (currentFolder === 'deleted') {
+      filteredMails = filteredMails.filter(mail => mail.id % 2 === 0);
+    } else if (currentFolder === 'spam') {
+      filteredMails = filteredMails.filter(mail => mail.sender.includes("promo"));
+    }
+    
+    if (currentFilter === 'unread') {
+      filteredMails = filteredMails.filter(mail => mail.unread);
+    } else if (currentFilter === 'flagged') {
+      filteredMails = filteredMails.filter(mail => mail.starred);
+    } else if (currentFilter === 'with attachments') {
+      filteredMails = filteredMails.filter(mail => mail.attachment);
+    }
+    
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    if (searchTerm) {
+      filteredMails = filteredMails.filter(mail => 
+        mail.subject.toLowerCase().includes(searchTerm) || 
+        mail.sender.toLowerCase().includes(searchTerm) ||
+        mail.preview.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    return filteredMails;
+  }
+
   function initSearch() {
     const input = document.getElementById("searchInput");
-    input.addEventListener("input", () => {
-      const term = input.value.toLowerCase();
-      const filtered = mails.filter(mail => 
-        mail.subject.toLowerCase().includes(term) || 
-        mail.sender.toLowerCase().includes(term) ||
-        mail.preview.toLowerCase().includes(term)
-      );
-      renderMailList(filtered);
+    input.addEventListener("input", filterAndRenderMails);
+  }
+
+  function initFilters() {
+    const filters = document.querySelectorAll('.mail-filter');
+    filters.forEach(filter => {
+      filter.addEventListener('click', () => {
+        // 移除所有过滤器的高亮
+        filters.forEach(f => f.classList.remove('active'));
+        // 高亮当前选中的过滤器
+        filter.classList.add('active');
+        
+        // 更新当前过滤器
+        currentFilter = filter.textContent.toLowerCase();
+        filterAndRenderMails();
+      });
     });
   }
 
@@ -943,29 +1245,101 @@
     
     btn.addEventListener("click", () => {
       modal.style.display = "flex";
+      // 添加动画类
+      setTimeout(() => {
+        modal.classList.add('show');
+      }, 10);
     });
     
     modal.addEventListener("click", e => {
-      if (e.target === modal) modal.style.display = "none";
+      if (e.target === modal) {
+        modal.classList.remove('show');
+        setTimeout(() => {
+          modal.style.display = "none";
+        }, 300);
+      }
     });
     
     document.addEventListener("keydown", e => {
-      if (e.key === "Escape") modal.style.display = "none";
+      if (e.key === "Escape" && modal.style.display === "flex") {
+        modal.classList.remove('show');
+        setTimeout(() => {
+          modal.style.display = "none";
+        }, 300);
+      }
     });
     
     const closeBtn = modal.querySelector(".modal-close");
     closeBtn.addEventListener("click", () => {
-      modal.style.display = "none";
+      modal.classList.remove('show');
+      setTimeout(() => {
+        modal.style.display = "none";
+      }, 300);
+    });
+    
+    // 发送按钮功能
+    const sendBtn = modal.querySelector('.modal-send');
+    sendBtn.addEventListener('click', () => {
+      const toInput = modal.querySelector('input[placeholder="Recipients"]');
+      const subjectInput = modal.querySelector('input[placeholder="Subject"]');
+      const bodyInput = modal.querySelector('textarea');
+      
+      if (toInput.value && subjectInput.value) {
+        // 创建新邮件
+        const newMail = {
+          id: Date.now(),
+          sender: "Bob <bob@example.com>",
+          receiver: toInput.value,
+          subject: subjectInput.value,
+          time: "Just now",
+          preview: bodyInput.value.substring(0, 50) + (bodyInput.value.length > 50 ? "..." : ""),
+          starred: false,
+          unread: false,
+          attachment: false,
+          body: `<p>${bodyInput.value.replace(/\n/g, "</p><p>")}</p>`
+        };
+        
+        // 添加到邮件列表
+        mails.unshift(newMail);
+        
+        // 重置表单
+        toInput.value = "";
+        subjectInput.value = "";
+        bodyInput.value = "";
+        
+        // 关闭模态框
+        modal.classList.remove('show');
+        setTimeout(() => {
+          modal.style.display = "none";
+        }, 300);
+        
+        // 更新邮件列表
+        filterAndRenderMails();
+      }
     });
   }
 
   window.onload = () => {
     setTimeout(() => {
-      document.getElementById("loading").style.display = "none";
-      renderMailList(mails);
+      const loading = document.getElementById("loading");
+      loading.classList.add('hidden');
+      
+      // 初始化界面
+      filterAndRenderMails();
       initSidebar();
       initSearch();
+      initFilters();
       initNewEmail();
+      
+      // 默认选中Inbox和第一封邮件
+      document.querySelector('.sidebar-item[data-folder="inbox"]').classList.add('active');
+      
+      // 确保第一封邮件在邮件列表中被高亮并显示内容
+      const firstMail = mails[0];
+      if (firstMail) {
+        selectedMailId = firstMail.id;
+        renderPreview(firstMail);
+      }
     }, 1000);
   };
 </script>
